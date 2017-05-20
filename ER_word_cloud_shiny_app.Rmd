@@ -1,0 +1,89 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(shiny)
+library(shinythemes)
+library(plyr)
+library(dplyr)
+library(magrittr)
+library(wordcloud)
+library(ggplot2)
+library(plotly)
+library(scales)
+```
+
+
+```{r}
+#the directory path will vary based on machine
+ topicwordsweightresult <- read.table("~/Desktop/ERMining/mallet_output_files/topic_words_weight.txt", header=F, sep="\t")
+
+ tm_values <- read.csv(file = "~/Desktop/ERMining/mallet_output_files/tmodeling_values.csv", header=TRUE)
+```
+
+
+```{r}
+ui <- fluidPage(
+  theme= shinytheme("cosmo"),
+  headerPanel(HTML("Mining the Eleanor Roosevelt <i>My Day</i> Columns")),
+  fluidRow(
+    column(4,
+      numericInput(inputId = "topic", "Select a Topic", 1, min = 0, max = 59, step = 1,
+  width = NULL),
+      numericInput(inputId = "word_num", "Select a Number of Words to Display", 50, min = 1, max = 50, step = 1,
+  width = NULL)
+    ),
+  column(8, 
+   plotOutput("topic_plot"))),
+  fluidRow(
+  column(12,
+  plotlyOutput("time_graph"))
+  ),
+  fluidRow(
+    column(8, tableOutput("doc_topics"))
+  )
+)
+server <- function(input, output) {
+  ##output topicwordcloud
+  output$topic_plot <- renderPlot({  
+    exploretopicwords <- function(topicnum, numwords) {
+        require(magrittr)
+        require(wordcloud)
+        require(dplyr)
+        topicwords <- topicwordsweightresult %>% filter(V1 == topicnum) %>% arrange(desc(V3))
+        topicwords$V1 <- NULL
+        topicwords <- topicwords[1:numwords,]
+        wc <- wordcloud(topicwords$V2, topicwords$V3,scale=c(5,1.5), colors=brewer.pal(8, "Dark2"), random.order=FALSE)
+        return(wc)  }
+       exploretopicwords(input$topic, input$word_num)
+    })
+    ##output topics over time
+    output$time_graph <- renderPlotly({
+      exploretopics_byyear <- function(topic) {
+        byyear <- ddply(tm_values, .(topicnum, year), summarise, mean_value = mean(value))
+    
+        filterbytopicnum <- byyear %>% filter(topicnum == topic)
+        tby_plot <- ggplot(filterbytopicnum, aes(year, mean_value * 100)) + geom_bar(stat="identity") + scale_x_continuous(name="Year", breaks=seq(1935, 1962, 2)) + scale_y_continuous(name="Yearly Proportion of Topics",limits=c(0,5))
+tby_plot    }
+        exploretopics_byyear(input$topic)
+    })
+    
+   output$doc_topics <- renderTable({
+      doc_topic_assoc <- function(topic) {
+  
+      #tm_values <- read.csv(file = "mallet_output_files/tmodeling_values.csv", header=TRUE)
+      bytopic <- tm_values %>% filter(topicnum == topic) %>% arrange(desc(value)) 
+      #a$Numbers <- a$Numbers * b
+      ##turn weights into percentages
+      bytopic$value <- bytopic$value * 100
+      head(bytopic, n=7)
+  }
+  doc_topic_assoc(input$topic)
+   }, include.rownames=FALSE)
+   
+}
+
+shinyApp(ui = ui, server = server)
+```
+
