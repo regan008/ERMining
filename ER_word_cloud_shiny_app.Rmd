@@ -2,7 +2,7 @@
 title: "R Notebook"
 output: html_notebook
 ---
-```{r}
+```{r Load Libraries, message=FALSE, warning=FALSE}
 library(shiny)
 library(shinythemes)
 library(plyr)
@@ -15,7 +15,7 @@ library(scales)
 ```
 
 
-```{r}
+```{r Load Data}
 #the directory path will vary based on machine
  topicwordsweightresult <- read.table("~/Desktop/ERMining/mallet_output_files/topic_words_weight.txt", header=F, sep="\t")
 
@@ -23,27 +23,27 @@ library(scales)
 ```
 
 
-```{r}
+```{r Generate UI Components}
 ui <- fluidPage(
   theme= shinytheme("cosmo"),
   headerPanel(HTML("Mining the Eleanor Roosevelt <i>My Day</i> Columns")),
-  fluidRow(
-    column(4,
+  sidebarPanel(
       numericInput(inputId = "topic", "Select a Topic", 1, min = 0, max = 59, step = 1,
   width = NULL),
-      numericInput(inputId = "word_num", "Select a Number of Words to Display", 50, min = 1, max = 50, step = 1,
-  width = NULL)
-    ),
-  column(8, 
-   plotOutput("topic_plot"))),
-  fluidRow(
-  column(12,
-  plotlyOutput("time_graph"))
+      numericInput(inputId = "word_num", "Select a Number of Words to Display", 50, min = 1, max = 50, step = 1, width = NULL)
   ),
-  fluidRow(
-    column(8, dataTableOutput("doc_topics"))
-  )
+  mainPanel(
+    plotOutput("topic_plot"),
+  
+  
+    plotlyOutput("time_graph"),
+  
+  
+    dataTableOutput("doc_topics")
+  
 )
+      )
+
 server <- function(input, output) {
   ##output topicwordcloud
   output$topic_plot <- renderPlot({  
@@ -77,7 +77,7 @@ tby_plot    }
       #a$Numbers <- a$Numbers * b
       ##turn weights into percentages
       bytopic$value <- bytopic$value * 100
-      head(bytopic, n=7)
+      head(bytopic, n=30)
   }
   doc_topic_assoc(input$topic)
    }, escape=FALSE)
