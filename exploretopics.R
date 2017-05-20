@@ -45,3 +45,7 @@ doc_topic_assoc(6, 5)
 final_tm_values <- ddply(tm_values, .(file, topicnum, value, Columndate, year, PlaceName, Geolocation), summarise, docurl = paste('<a href=\"https://www2.gwu.edu/~erpapers/myday/displaydoc.cfm?_y=',year,'&_f=',file,'\">View the column</a>', sep=''))
 write.csv(final_tm_values, "~/Desktop/ERMining/mallet_output_files/tmodeling_values.csv", row.names=FALSE )
 
+##create RDS files to avoid having to load really big csv docs.
+saveRDS(tm_values, "data/tm_values.rds")
+saveRDS(topickeys, "data/topickeys.rds")
+saveRDS(topicwordsweightresult, "data/topic_words_weight.rds")

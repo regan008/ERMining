@@ -17,34 +17,51 @@ library(scales)
 
 ```{r Load Data}
 #the directory path will vary based on machine
- topicwordsweightresult <- read.table("~/Desktop/ERMining/mallet_output_files/topic_words_weight.txt", header=F, sep="\t")
-
- tm_values <- read.csv(file = "~/Desktop/ERMining/mallet_output_files/tmodeling_values.csv", header=TRUE)
+# topicwordsweightresult <- read.table("~/Desktop/ERMining/mallet_output_files/topic_words_weight.txt", header=F, sep="\t")
+topicwordsweightresult <- readRDS("data/topic_words_weight.rds")
+# tm_values <- read.csv(file = "~/Desktop/ERMining/mallet_output_files/tmodeling_values.csv", header=TRUE)
+tm_values <- readRDS("data/tm_values.rds")
+topic_keys <- readRDS("data/topickeys.rds")
 ```
 
 
 ```{r Generate UI Components}
 ui <- fluidPage(
   theme= shinytheme("cosmo"),
+  
   headerPanel(HTML("Mining the Eleanor Roosevelt <i>My Day</i> Columns")),
   sidebarPanel(
-      numericInput(inputId = "topic", "Select a Topic", 1, min = 0, max = 59, step = 1,
-  width = NULL),
-      numericInput(inputId = "word_num", "Select a Number of Words to Display", 50, min = 1, max = 50, step = 1, width = NULL)
-  ),
+  
+  sliderInput(inputId = "topic", "Select a Topic", 0, 59, 1, step = 1),
+  #sidebarPanel(numericInput(inputId = "topic", "Select a Topic", 1, min = 0, max = 59, step = 1, width = NULL),
+      numericInput(inputId = "word_num", "Select a Number of Words to Display", 50, min = 1, max = 50, step = 1, width = NULL) ),
+  
   mainPanel(
-    plotOutput("topic_plot"),
-  
-  
-    plotlyOutput("time_graph"),
-  
-  
-    dataTableOutput("doc_topics")
-  
-)
-      )
+    h2(textOutput("TopWordsInTopicNumber")),
+    plotOutput("topic_plot") ),
+  fluidPage(fluidRow(column(width=10, offset= 2), 
+                     h2("Yearly proportion of words in topic"),
+                     textOutput("topicCorpusWeight"),
+                     plotlyOutput("time_graph"))),
+  fluidPage(fluidRow(column(width=10, offset = 2),
+                     h2("Top Columns"),
+                     dataTableOutput("doc_topics")))
+  )
 
 server <- function(input, output) {
+  
+  
+  
+  output$topicCorpusWeight <- renderText({ 
+    topicweight <- topic_keys %>% filter(V1 == input$topic) 
+    topicweight <- topicweight$V2 * 100
+    paste(topicweight, "% of the corpus in total.")
+  })
+  output$TopWordsInTopicNumber <- renderText({ 
+    paste("Top Words in Topic #",input$topic)
+  })
+    
+
   ##output topicwordcloud
   output$topic_plot <- renderPlot({  
     exploretopicwords <- function(topicnum, numwords) {
@@ -64,7 +81,7 @@ server <- function(input, output) {
         byyear <- ddply(tm_values, .(topicnum, year), summarise, mean_value = mean(value))
     
         filterbytopicnum <- byyear %>% filter(topicnum == topic)
-        tby_plot <- ggplot(filterbytopicnum, aes(year, mean_value * 100)) + geom_bar(stat="identity") + scale_x_continuous(name="Year", breaks=seq(1935, 1962, 2)) + scale_y_continuous(name="Yearly Proportion of Topics",limits=c(0,5))
+        tby_plot <- ggplot(filterbytopicnum, aes(year, mean_value * 100)) + geom_bar(stat="identity") + scale_x_continuous(name="Year", breaks=seq(1935, 1962, 2)) + scale_y_continuous(limits=c(0,5))
 tby_plot    }
         exploretopics_byyear(input$topic)
     })
