@@ -41,7 +41,7 @@ ui <- fluidPage(
   plotlyOutput("time_graph"))
   ),
   fluidRow(
-    column(8, tableOutput("doc_topics"))
+    column(8, dataTableOutput("doc_topics"))
   )
 )
 server <- function(input, output) {
@@ -69,7 +69,7 @@ tby_plot    }
         exploretopics_byyear(input$topic)
     })
     
-   output$doc_topics <- renderTable({
+   output$doc_topics <- renderDataTable({
       doc_topic_assoc <- function(topic) {
   
       #tm_values <- read.csv(file = "mallet_output_files/tmodeling_values.csv", header=TRUE)
@@ -80,7 +80,7 @@ tby_plot    }
       head(bytopic, n=7)
   }
   doc_topic_assoc(input$topic)
-   }, include.rownames=FALSE)
+   }, escape=FALSE)
    
 }
 
