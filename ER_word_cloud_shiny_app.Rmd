@@ -42,13 +42,17 @@ ui <- fluidPage(
   mainPanel(
     h2(textOutput("TopWordsInTopicNumber")),
     plotOutput("topic_plot") ),
-  fluidPage(fluidRow(column(width=6), 
-                     h2("Yearly proportion of words in topic"),
-                     textOutput("topicCorpusWeight"),
-                     plotlyOutput("time_graph"),
-  column(width=6),
-                    leafletOutput("doc_map"))),
-  fluidPage(fluidRow(column(width=10, offset = 2),
+  fluidPage(
+    fluidRow(
+      column(6, 
+             h2("Locations of Top Columns"),
+             leafletOutput("doc_map")),
+                    
+  column(6,
+             h2("Yearly proportion of words in topic"),
+             textOutput("topicCorpusWeight"),
+             plotlyOutput("time_graph")))),
+  fluidPage(fluidRow(column(width=12),
                      h2("Top Columns"),
                      dataTableOutput("doc_topics")))
   )
