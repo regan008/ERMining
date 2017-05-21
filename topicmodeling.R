@@ -8,7 +8,7 @@ library(dplyr)
 library(tidyr)
 library(tools)
 library(lubridate)
-
+library(plyr)
 ##
 ## Prep and Variable Creation ##
 ##
@@ -89,11 +89,21 @@ results <- left_join(results, meta, by = "file")
 
 #get rid of the X file that came in with metadata.
 results <- results %>% select(-X)
+tmresults <- ddply(results, .(file, topicnum, value, Columndate, year, PlaceName, Geolocation), summarise, docurl = paste('<a href=\"https://www2.gwu.edu/~erpapers/myday/displaydoc.cfm?_y=',year,'&_f=',file,'\">View the column</a>', sep=''))
+tmresults <- tmresults %>%
+  mutate(location = Geolocation)
 
+tmresults <- tmresults %>% separate(Geolocation, c('Latitude', 'Longitude'), sep= " ")
+
+tmresults$Latitude = as.numeric(as.character(tmresults$Latitude))
+
+tmresults$Longitude = as.numeric(as.character(tmresults$Longitude))
+tmresults <- tmresults %>% select(-location)
 #write csv with the results dataframe
 write.csv(results, "~/Desktop/ERMining/mallet_output_files/tmodeling_values.csv", row.names=FALSE)
+saveRDS(tmresults, "data/tm_values.rds")
 #see the first 10 rows in console.
-head(results, n=10)
+head(tmresults, n=10)
 
 
 
