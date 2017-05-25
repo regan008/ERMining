@@ -64,7 +64,7 @@ server <- function(input, output) {
   
   output$topicCorpusWeight <- renderText({ 
     topicweight <- topic_keys %>% filter(V1 == input$topic) 
-    topicweight <- topicweight$V2 * 100
+    topicweight <- topicweight$V2
     paste(topicweight, "% of the corpus in total.")
   })
   output$TopWordsInTopicNumber <- renderText({ 
@@ -88,10 +88,10 @@ server <- function(input, output) {
     ##output topics over time
     output$time_graph <- renderPlotly({
       exploretopics_byyear <- function(topic) {
-        byyear <- ddply(tm_values, .(topicnum, year), summarise, mean_value = mean(value))
+        byyear <- ddply(tm_values, .(topicnum, year), summarise, mean_value = mean(value) * 100)
     
         filterbytopicnum <- byyear %>% filter(topicnum == topic)
-        tby_plot <- ggplot(filterbytopicnum, aes(year, mean_value * 100)) + geom_bar(stat="identity") + scale_x_continuous(name="Year", breaks=seq(1935, 1962, 2)) + scale_y_continuous(limits=c(0,5))
+        tby_plot <- ggplot(filterbytopicnum, aes(year, mean_value)) + geom_bar(stat="identity") + scale_x_continuous(name="Year", breaks=seq(1935, 1962, 2)) + scale_y_continuous(limits=c(0,5))
 tby_plot    }
         exploretopics_byyear(input$topic)
     })
@@ -103,7 +103,7 @@ tby_plot    }
       bytopic <- tm_values %>% filter(topicnum == topic) %>% arrange(desc(value)) 
       #a$Numbers <- a$Numbers * b
       ##turn weights into percentages
-      bytopic$value <- bytopic$value * 100
+      bytopic$value <- bytopic$value 
       head(bytopic, n=30)
   }
   doc_topic_assoc(input$topic)
@@ -133,23 +133,4 @@ shinyApp(ui = ui, server = server)
 ```
 
 
-```{r}
-
-
-tm_1 <- tm_values %>%
-  filter(topicnum == 45) %>%
-  arrange(desc(value)) 
-tm_1 <- tm_1[1:75,]
-
-pal <- colorFactor(c("navy", "red", "green"), domain = c("1", "2", "3"))
-
-leaflet(tm_1) %>%
-  addTiles() %>%
-  addCircleMarkers(radius = ~(value) *50,
-                   color = ~pal(topicnum),
-                   stroke = FALSE,
-                   label = ~paste("Topic Number = ", topicnum, " | ", "Percent = ", str_sub(value, 1, 4), "%", " | ", Columndate, "|", " Place Name: ", PlaceName, sep = ""),
-                   fillOpacity = 0.3) %>%
-  addLegend("topright", pal = pal, values = ~topicnum)
-```
 
